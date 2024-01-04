@@ -1,0 +1,44 @@
+version: "3.5"
+
+services:
+  traefik:
+    image: traefik
+    command:
+      - "--api.insecure=false" # set to "true" only to activate traefik GUI
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+
+      # redirect port 80 => 443
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+
+      - "--entrypoints.websecure.address=:443"
+
+      - "--certificatesresolvers.lets-encrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.lets-encrypt.acme.email=your-email-address@example.com"
+      - "--certificatesresolvers.lets-encrypt.acme.storage=/letsencrypt/acme.json"
+
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8448:8448"
+#      - "8080:8080" # uncomment only to activate traefik GUI
+    networks:
+      - traefik_web
+    volumes:
+      - letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
+volumes:
+  letsencrypt:
+  
+networks:
+  traefik_web:
+    external:
+      name: traefik_web
+

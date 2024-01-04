@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+
+  webserver:
+    image: httpd:latest
+    volumes:
+      - html:/usr/local/apache2/htdocs/
+    restart: unless-stopped
+    networks:
+      traefik_web:
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+      - "traefik.enable=true"
+
+      - traefik.http.routers.exemple-app.tls=true
+      - "traefik.http.routers.exemple-app.rule=Host(`apache.exemple.com`)"
+      - "traefik.http.routers.exemple-app.entrypoints=websecure"
+      - "traefik.http.routers.exemple-app.tls.certresolver=lets-encrypt"
+           
+      - traefik.http.middlewares.exemple-app.headers.customFrameOptionsValue=ALLOW-FROM https://exemple.com
+      - traefik.http.middlewares.exemple-app.headers.contentSecurityPolicy=frame-ancestors 'self' exemple.com *.exemple.com
+      - traefik.http.middlewares.exemple-app.headers.stsSeconds=155520011
+      - traefik.http.middlewares.exemple-app.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.exemple-app.headers.stsPreload=true
+      - traefik.http.middlewares.exemple-app.headers.customresponseheaders.X-Frame-Options=SAMEORIGIN
+
+volumes:
+  html:
+
+networks:
+  traefik_web:
+    external:
+      name: traefik_web
